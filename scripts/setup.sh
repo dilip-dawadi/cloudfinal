@@ -142,33 +142,46 @@ echo ""
 # Get the public key
 SSH_PUBLIC_KEY=$(cat "${SSH_KEY_PATH}.pub")
 
-# Update variables.tf with the SSH key
-echo "📝 Updating variables.tf with your SSH key..."
+# Check if terraform.tfvars exists
+TFVARS_FILE="terraform.tfvars"
 
-# Create a temporary file with the new content
-awk -v new_key="$SSH_PUBLIC_KEY" '
-/^variable "ssh_public_key"/ {
-    in_var = 1
-    print $0
-    next
-}
-in_var && /^  default/ {
-    print "  default     = \"" new_key "\""
-    in_var = 0
-    next
-}
-in_var && /^}/ {
-    in_var = 0
-}
-!in_var || (in_var && !/^  default/) {
-    print $0
-}
-' variables.tf > variables.tf.tmp && mv variables.tf.tmp variables.tf
+if [ ! -f "$TFVARS_FILE" ]; then
+    echo "📝 Creating terraform.tfvars for secure configuration..."
+    cat > "$TFVARS_FILE" << EOF
+# Terraform Variables - Secure Configuration
+# This file is in .gitignore and won't be committed
 
-echo "✅ SSH key added to variables.tf"
+# SSH Configuration
+ssh_public_key = "$SSH_PUBLIC_KEY"
+
+# Database Configuration (update if needed)
+db_password = "YourSecurePassword123!"
+EOF
+    echo "✅ Created terraform.tfvars with your SSH key"
+else
+    echo "📝 Updating terraform.tfvars with your SSH key..."
+    
+    # Check if ssh_public_key already exists in the file
+    if grep -q "^ssh_public_key" "$TFVARS_FILE"; then
+        # Update existing entry
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' "s|^ssh_public_key.*|ssh_public_key = \"$SSH_PUBLIC_KEY\"|" "$TFVARS_FILE"
+        else
+            sed -i "s|^ssh_public_key.*|ssh_public_key = \"$SSH_PUBLIC_KEY\"|" "$TFVARS_FILE"
+        fi
+    else
+        # Add new entry
+        echo "" >> "$TFVARS_FILE"
+        echo "# SSH Configuration" >> "$TFVARS_FILE"
+        echo "ssh_public_key = \"$SSH_PUBLIC_KEY\"" >> "$TFVARS_FILE"
+    fi
+    
+    echo "✅ SSH key added to terraform.tfvars"
+fi
 echo ""
 
 # Prompt for database password
+echo ""
 echo "🔐 Database Password Setup"
 echo "Current password: YourSecurePassword123!"
 echo ""
@@ -176,7 +189,7 @@ read -p "Do you want to change the database password? (yes/no): " CHANGE_PASSWOR
 
 if [ "$CHANGE_PASSWORD" = "yes" ]; then
     echo ""
-    read -sp "Enter new database password: " DB_PASSWORD
+    read -sp "Enter new database password (min 8 characters): " DB_PASSWORD
     echo ""
     read -sp "Confirm password: " DB_PASSWORD_CONFIRM
     echo ""
@@ -191,17 +204,22 @@ if [ "$CHANGE_PASSWORD" = "yes" ]; then
         exit 1
     fi
     
-    # Update password in variables.tf
-    perl -i -pe 's/(default\s*=\s*")[^"]*("\s*#.*db_password)/$1'"$DB_PASSWORD"'$2/g' variables.tf
-    
-    # Update password in setup-db.sh (if it exists)
-    if [ -f "scripts/setup-db.sh" ]; then
-        perl -i -pe "s/(mysql.*-p')[^']*(')/\$1$DB_PASSWORD\$2/g" scripts/setup-db.sh
-    elif [ -f "scripts/helper/setup-db.sh" ]; then
-        perl -i -pe "s/(mysql.*-p')[^']*(')/\$1$DB_PASSWORD\$2/g" scripts/helper/setup-db.sh
+    # Update password in terraform.tfvars
+    if grep -q "^db_password" "$TFVARS_FILE"; then
+        # Update existing entry
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' "s|^db_password.*|db_password = \"$DB_PASSWORD\"|" "$TFVARS_FILE"
+        else
+            sed -i "s|^db_password.*|db_password = \"$DB_PASSWORD\"|" "$TFVARS_FILE"
+        fi
+    else
+        # Add new entry
+        echo "" >> "$TFVARS_FILE"
+        echo "# Database Configuration" >> "$TFVARS_FILE"
+        echo "db_password = \"$DB_PASSWORD\"" >> "$TFVARS_FILE"
     fi
     
-    echo "✅ Database password updated!"
+    echo "✅ Database password updated in terraform.tfvars!"
 fi
 
 echo ""
@@ -211,12 +229,16 @@ echo "========================================="
 echo ""
 echo "📝 Configuration Summary:"
 echo "  - SSH Key: $SSH_KEY_PATH"
-echo "  - SSH key added to variables.tf"
+echo "  - Configuration saved to: terraform.tfvars"
 if [ "$CHANGE_PASSWORD" = "yes" ]; then
-    echo "  - Database password updated"
+    echo "  - Database password: Custom (updated)"
 else
     echo "  - Database password: YourSecurePassword123! (default)"
 fi
+echo ""
+echo "🔒 Security Note:"
+echo "  - terraform.tfvars is in .gitignore (won't be committed)"
+echo "  - Your sensitive data stays on your machine only"
 echo ""
 echo "🚀 Next step: Deploy your infrastructure"
 echo "   ./scripts/deploy.sh"
