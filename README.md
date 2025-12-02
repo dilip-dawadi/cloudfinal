@@ -17,6 +17,44 @@ Automated Terraform infrastructure for a highly available, auto-scaling web appl
 - ⚙️ Updates configuration automatically
 - 🔐 Optional: Set custom database password
 
+### 🔒 Security Best Practice (IMPORTANT!)
+
+**Default values** in `variables.tf` work out of the box, but for **security**, create a `terraform.tfvars` file to override sensitive defaults:
+
+**Create the file:**
+
+```bash
+nano terraform.tfvars
+```
+
+**Add your secure values:**
+
+```hcl
+# Database Configuration
+db_password = "YourSecurePassword123!"  # Min 8 characters - CHANGE THIS!
+db_username = "admin"
+db_name = "webapp_db"
+db_table_name = "users"
+
+# SSH Key (setup.sh updates this automatically)
+ssh_public_key = "ssh-rsa AAAA...your-actual-key..."
+```
+
+**Why this matters:**
+
+- ✅ `terraform.tfvars` is in `.gitignore` - won't be committed to git
+- ✅ Keeps passwords and keys out of version control
+- ✅ Your secrets stay on your machine only
+- ✅ Values here **override** defaults in `variables.tf`
+
+**What to customize:**
+
+- `db_password` - Use a strong password (minimum 8 characters)
+- `db_username`, `db_name`, `db_table_name` - Optional, defaults work fine
+- `ssh_public_key` - `setup.sh` handles this automatically
+
+> 💡 **Tip:** The `setup.sh` script will update your SSH key automatically, so you only need to manually set the database password if you want something different than the default.
+
 ### Step 2: Deploy
 
 ```bash
