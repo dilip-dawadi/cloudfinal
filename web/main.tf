@@ -33,6 +33,14 @@ resource "aws_launch_template" "web" {
 
   vpc_security_group_ids = [var.web_sg_id]
 
+  # Allow metadata service access
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "optional"  # Allow both IMDSv1 and IMDSv2
+    http_put_response_hop_limit = 1
+    instance_metadata_tags      = "enabled"
+  }
+
   user_data = base64encode(templatefile("${path.root}/user-data.sh", {
     db_endpoint = var.db_endpoint
     db_name     = var.db_name

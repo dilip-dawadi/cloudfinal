@@ -50,10 +50,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 
 // Get EC2 Instance ID
-$instance_id = trim(file_get_contents("http://169.254.169.254/latest/meta-data/instance-id"));
+$instance_id = @file_get_contents("http://169.254.169.254/latest/meta-data/instance-id");
+if ($instance_id === false) {
+    $instance_id = "Unable to fetch";
+}
 
 // Get Availability Zone
-$availability_zone = trim(file_get_contents("http://169.254.169.254/latest/meta-data/placement/availability-zone"));
+$availability_zone = @file_get_contents("http://169.254.169.254/latest/meta-data/placement/availability-zone");
+if ($availability_zone === false) {
+    $availability_zone = "Unable to fetch";
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">

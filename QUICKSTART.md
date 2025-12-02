@@ -1,42 +1,56 @@
-# Quick Start
+# Quick Start Guide
 
-## 1. Setup
+## 3-Step Deployment
+
+### Step 1: Setup
 
 ```bash
-# Generate SSH key
-ssh-keygen -t rsa -b 4096 -f ~/.ssh/cloudfinal-key
-
-# Get public key
-cat ~/.ssh/cloudfinal-key.pub
+./scripts/setup.sh
 ```
 
-## 2. Configure
+- Generates SSH key automatically
+- Updates configuration
+- Prompts for database password
 
-Edit `variables.tf`:
-
-- Add your SSH public key
-- Change database password
-
-## 3. Deploy
+### Step 2: Deploy
 
 ```bash
 ./scripts/deploy.sh
 ```
 
-## 4. Setup Database
+- Creates all AWS resources
+- Launches instances
+- Sets up database automatically
 
-```bash
-./scripts/setup-db.sh
-```
-
-## 5. Access
+### Step 3: Access
 
 ```bash
 ./scripts/info.sh
 ```
 
-Open the Load Balancer URL in your browser.
+- Shows load balancer URL
+- Shows bastion IP for SSH access
 
-## Done! 🎉
+## That's It! 🎉
 
-See `README.md` for full documentation.
+Open the load balancer URL in your browser. Refresh multiple times to see load balancing in action (different instance IDs).
+
+## Cleanup
+
+```bash
+./scripts/destroy.sh
+```
+
+## What Gets Created
+
+- VPC with 6 subnets across 2 availability zones
+- Application Load Balancer
+- Auto Scaling Group (2-6 instances)
+- RDS MySQL database
+- NAT Gateways, Internet Gateway
+- Security groups with proper chaining
+- Bastion host for SSH access
+
+## Need Help?
+
+See `README.md` for detailed architecture and demo instructions.

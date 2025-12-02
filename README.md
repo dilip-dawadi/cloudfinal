@@ -1,148 +1,103 @@
-# AWS Cloud Final Project - Terraform
+# AWS Multi-Tier Web Application
 
-Multi-tier web application infrastructure matching the AWS architecture diagram.
+Fully automated Terraform deployment of a highly available, scalable web application on AWS.
 
-## 📁 Project Structure (Layer-Based)
+## 🚀 Quick Start
 
-```
-network/      - VPC, Subnets, NAT Gateways, Routes
-security/     - Security Groups (ALB, Web, Bastion, Database)
-alb/          - Application Load Balancer, Target Group
-web/          - Launch Template, Bastion Host
-asg/          - Auto Scaling Group, Scaling Policies
-database/     - RDS MySQL Instance
-```
+### 1. Initial Setup (One Command!)
 
-Each folder contains: `main.tf`, `variables.tf`, `outputs.tf`
-
-## Quick Deploy
-
-### 1. Setup SSH Key
 ```bash
-ssh-keygen -t rsa -b 4096 -f ~/.ssh/cloudfinal-key
-cat ~/.ssh/cloudfinal-key.pub
+./scripts/setup.sh
 ```
 
-### 2. Configure
-Edit `variables.tf`:
-- Add your SSH public key
-- Change database password
+Automatically generates SSH key, updates configuration, and prompts for database password.
 
-### 3. Deploy
+### 2. Deploy Infrastructure
+
 ```bash
 ./scripts/deploy.sh
 ```
 
-### 4. Create Database Table
-```bash
-./scripts/setup-db.sh
-```
+Deploys everything and creates database table automatically - **no manual steps required!**
 
-### 5. Access
+### 3. Access Application
+
 ```bash
 ./scripts/info.sh
 ```
 
-## Architecture Matches Diagram
+Get your load balancer URL and other deployment information.
 
-✅ **Network Layer**
-- VPC: 192.168.0.0/16
-- Availability Zones: A & B
-- Public Subnets: 192.168.1.0/24, 192.168.2.0/24
-- Private Subnets (App): 192.168.3.0/24, 192.168.4.0/24
-- Private Subnets (DB): 192.168.5.0/24, 192.168.6.0/24
-- NAT Gateways: 2 (one per AZ)
-- Internet Gateway: 1
-
-✅ **Security Layer**
-- Security group chaining for database
-- ALB → Web → Database access control
-
-✅ **ALB Layer**
-- Application-tier load balancer
-- Target group with health checks
-
-✅ **Web Layer**
-- Launch template with user data
-- Bastion host in public subnet
-
-✅ **ASG Layer**
-- Min=2, Desired=2, Max=6
-- CPU-based scaling (70% up, 20% down)
-
-✅ **Database Layer**
-- RDS MySQL in private subnets
-- Primary DB instance
-
-## Project Deliverables
-
-### 1. Show Components
-- Load Balancer
-- Auto Scaling Group (min=2, max=6)
-- Target Group
-- NAT Gateways (2)
-- Route Tables
-- RDS Database
-- Launch Template
-- Security Group Chain
-
-### 2. Demonstrate
-
-**Load Balancing:**
-```bash
-# Refresh browser, see different instance IDs
-```
-
-**Database:**
-```sql
-SELECT * FROM users ORDER BY created_at DESC;
-```
-
-**Auto Scaling:**
-```bash
-# SSH to instance
-while true; do true; done
-# Watch scale to 6
-```
-
-**High Availability:**
-```bash
-# Terminate all instances
-# ASG recovers with 2 instances (min_size)
-```
-
-## Scripts
-
-```bash
-./scripts/deploy.sh    # Deploy infrastructure
-./scripts/plan.sh      # Preview changes
-./scripts/info.sh      # Show deployment info
-./scripts/setup-db.sh  # Database setup helper
-./scripts/destroy.sh   # Destroy infrastructure
-```
-
-## Troubleshooting
-
-**Website not loading?**
-- Check target group health
-- Verify security groups
-
-**Database connection error?**
-- Verify RDS status
-- Check security group rules
-
-**Auto scaling not working?**
-- Check CloudWatch alarms
-- Verify scaling policies
-
-## Cleanup
+### 4. Clean Up
 
 ```bash
 ./scripts/destroy.sh
 ```
 
-## Documentation
+## 📁 Project Structure
 
-- `QUICKSTART.md` - Quick deployment guide
-- `DEPLOY.md` - Step-by-step deployment
-- `SQL_COMMANDS.md` - Database reference
+```
+├── network/      - VPC, Subnets, NAT Gateways, Internet Gateway
+├── security/     - Security Groups (ALB, Web, Bastion, Database)
+├── alb/          - Application Load Balancer, Target Group
+├── web/          - Launch Template, Bastion Host
+├── asg/          - Auto Scaling Group, Scaling Policies
+├── database/     - RDS MySQL Database
+└── scripts/      - Automation scripts (setup, deploy, info, destroy)
+```
+
+## 🏗️ AWS Infrastructure
+
+**Network Layer**
+
+- VPC: 192.168.0.0/16 across 2 Availability Zones
+- 2 Public Subnets: 192.168.1.0/24, 192.168.2.0/24
+- 2 Private App Subnets: 192.168.3.0/24, 192.168.4.0/24
+- 2 Private DB Subnets: 192.168.5.0/24, 192.168.6.0/24
+- 2 NAT Gateways (one per AZ)
+- Internet Gateway
+
+**Compute Layer**
+
+- Application Load Balancer (public-facing)
+- Auto Scaling Group: Min=2, Desired=2, Max=6
+- Launch Template with Amazon Linux 2023
+- CPU-based scaling (70% scale up, 20% scale down)
+
+**Database Layer**
+
+- RDS MySQL (db.t3.micro)
+- Multi-AZ capable
+- Private subnets only
+
+**Security Layer**
+
+- Security group chaining: ALB → Web → Database
+- Bastion host for SSH access
+- No direct internet access to app/database instances
+
+## 🎯 Video Demo Requirements
+
+1. **Show Components**: Load Balancer, Auto Scaling Group, Target Group, NAT Gateways, Database, Launch Template, Security Group Chain
+
+2. **Load Balancing Test**: Refresh browser to see different Instance IDs
+
+3. **Database Operations**: Insert data from each instance
+
+   ```sql
+   SELECT * FROM users ORDER BY created_at DESC;
+   ```
+
+4. **Auto Scaling Test**:
+
+   ```bash
+   # SSH to instance and run CPU stress
+   while true; do true; done
+   # Watch instances scale from 2 to 6
+   ```
+
+5. **High Availability Test**: Terminate all instances → ASG recovers with 2 instances (min_size)
+
+## 📚 Additional Documentation
+
+- `QUICKSTART.md` - Simplified deployment guide

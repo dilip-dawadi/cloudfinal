@@ -69,11 +69,20 @@ echo "========================================="
 echo "  ✅ Deployment Complete!"
 echo "========================================="
 echo ""
+
+# Wait for instances to be ready
+echo "⏳ Waiting 30 seconds for instances to initialize..."
+sleep 30
+
+# Setup database table automatically
+echo ""
+echo "🗄️  Setting up database table..."
+./scripts/setup-db.sh
+
+echo ""
 terraform output
 
 echo ""
-echo "📝 Next Steps:"
-echo "1. Note the bastion_public_ip and load_balancer_url above"
-echo "2. SSH to bastion and create the database table"
-echo "3. See DEPLOY.md for detailed post-deployment steps"
+echo "📝 All Done! Your infrastructure is ready."
+echo "   Open the load_balancer_url in your browser"
 echo ""

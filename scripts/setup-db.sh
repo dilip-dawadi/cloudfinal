@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Setup database on RDS instance
+# Setup database on RDS instance - RUN ONCE after deployment
 # Usage: ./scripts/setup-db.sh
 
 echo "========================================="
@@ -22,32 +22,34 @@ fi
 echo "RDS Endpoint: $RDS_ENDPOINT"
 echo "Bastion IP: $BASTION_IP"
 echo ""
+echo "Creating database table via bastion host..."
+echo ""
 
-# Create SQL script
-cat > /tmp/setup_db.sql << 'EOF'
-USE webapp_db;
+# SSH to bastion and create table
+ssh -o StrictHostKeyChecking=no -i ~/.ssh/cloudfinal-key ec2-user@$BASTION_IP << ENDSSH
+# Install MySQL client if not present
+sudo yum install -y mariadb105 2>/dev/null || echo "MariaDB client already installed"
 
+# Create the table
+mysql -h $RDS_ENDPOINT -u admin -p'YourSecurePassword123!' webapp_db << 'EOSQL'
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_created_at (created_at),
-    INDEX idx_email (email)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Show table structure
-DESCRIBE users;
-
--- Insert sample data
 INSERT INTO users (name, email) VALUES 
-    ('Test User 1', 'test1@example.com'),
-    ('Test User 2', 'test2@example.com');
+    ('Test User', 'test@example.com'),
+    ('Demo User', 'demo@example.com')
+ON DUPLICATE KEY UPDATE name=name;
 
--- Verify
-SELECT * FROM users;
-SELECT COUNT(*) as total_users FROM users;
-EOF
+SELECT COUNT(*) as total_rows FROM users;
+EOSQL
+
+echo ""
+echo "✅ Database table created successfully!"
+ENDSSH
 
 echo "📝 SQL script created at /tmp/setup_db.sql"
 echo ""
