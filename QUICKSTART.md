@@ -25,7 +25,7 @@
 ### Step 3: Access
 
 ```bash
-./scripts/info.sh
+./scripts/helper/info.sh
 ```
 
 - Shows load balancer URL

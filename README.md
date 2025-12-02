@@ -23,7 +23,7 @@ Deploys everything and creates database table automatically - **no manual steps 
 ### 3. Access Application
 
 ```bash
-./scripts/info.sh
+./scripts/helper/info.sh
 ```
 
 Get your load balancer URL and other deployment information.

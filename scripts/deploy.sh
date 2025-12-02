@@ -77,7 +77,7 @@ sleep 30
 # Setup database table automatically
 echo ""
 echo "🗄️  Setting up database table..."
-./scripts/setup-db.sh
+./scripts/helper/setup-db.sh
 
 echo ""
 terraform output

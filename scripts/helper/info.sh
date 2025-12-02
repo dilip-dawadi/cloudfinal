@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Show useful information about the deployment
-# Usage: ./scripts/info.sh
+# Usage: ./scripts/helper/info.sh
 
 echo "========================================="
 echo "  AWS Cloud Final - Deployment Info"
@@ -61,5 +61,5 @@ if [ -n "$ASG_NAME" ]; then
 fi
 
 echo "🔄 Refresh this info:"
-echo "   ./scripts/info.sh"
+echo "   ./scripts/helper/info.sh"
 echo ""

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Setup database on RDS instance - RUN ONCE after deployment
-# Usage: ./scripts/setup-db.sh
+# Usage: ./scripts/helper/setup-db.sh
 
 echo "========================================="
 echo "  Database Setup Script"

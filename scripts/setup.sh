@@ -85,7 +85,7 @@ if [ "$CHANGE_PASSWORD" = "yes" ]; then
     perl -i -pe 's/(default\s*=\s*")[^"]*("\s*#.*db_password)/$1'"$DB_PASSWORD"'$2/g' variables.tf
     
     # Update password in setup-db.sh
-    perl -i -pe "s/(mysql.*-p')[^']*(')/\$1$DB_PASSWORD\$2/g" scripts/setup-db.sh
+    perl -i -pe "s/(mysql.*-p')[^']*(')/\$1$DB_PASSWORD\$2/g" scripts/helper/setup-db.sh
     
     echo "✅ Database password updated!"
 fi

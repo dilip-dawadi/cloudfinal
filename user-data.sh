@@ -39,14 +39,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->bind_param("ss", $name, $email);
         
         if ($stmt->execute()) {
-            echo "<p style='color: green;'>Data inserted successfully!</p>";
+            // Redirect after successful insert to prevent form resubmission
+            header("Location: " . $_SERVER['PHP_SELF'] . "?success=1");
+            exit();
         } else {
-            echo "<p style='color: red;'>Error: " . $stmt->error . "</p>";
+            $error = "Error: " . $stmt->error;
         }
         $stmt->close();
     } else {
-        echo "<p style='color: orange;'>Please fill in both fields.</p>";
+        $error = "Please fill in both fields.";
     }
+}
+
+// Display success or error message from redirect
+$message = '';
+if (isset($_GET['success'])) {
+    $message = "<p style='color: green; padding: 10px; background: #d4edda; border-radius: 5px;'>✅ Data inserted successfully!</p>";
+} elseif (isset($error)) {
+    $message = "<p style='color: red; padding: 10px; background: #f8d7da; border-radius: 5px;'>❌ " . htmlspecialchars($error) . "</p>";
 }
 
 // Get EC2 Instance ID
@@ -145,6 +155,8 @@ if ($availability_zone === false) {
             <strong>EC2 Instance ID:</strong> <?php echo htmlspecialchars($instance_id); ?><br>
             <strong>Availability Zone:</strong> <?php echo htmlspecialchars($availability_zone); ?>
         </div>
+        
+        <?php echo $message; ?>
         
         <h2>Add New User</h2>
         <form method="post" action="">
