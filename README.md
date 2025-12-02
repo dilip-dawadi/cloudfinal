@@ -12,48 +12,36 @@ Automated Terraform infrastructure for a highly available, auto-scaling web appl
 
 **What it does:**
 
-- 🔍 Finds your existing SSH keys automatically
-- 🔑 Or creates a new one if needed
-- ⚙️ Updates configuration automatically
-- 🔐 Optional: Set custom database password
+- 🔍 Checks for existing configuration in `terraform.tfvars`
+- 🔑 If found, asks if you want to keep it (quick re-run!)
+- 🗂️ Otherwise, scans `~/.ssh/` for existing SSH keys
+- ⚙️ Auto-creates secure `terraform.tfvars` with your selections
+- 🔐 Shows current password, optional to change it
 
-### 🔒 Security Best Practice (IMPORTANT!)
+### 🔒 Security (Automatic!)
 
-**Default values** in `variables.tf` work out of the box, but for **security**, create a `terraform.tfvars` file to override sensitive defaults:
-
-**Create the file:**
-
-```bash
-nano terraform.tfvars
-```
-
-**Add your secure values:**
+**The `setup.sh` script automatically creates a secure `terraform.tfvars` file:**
 
 ```hcl
-# Database Configuration
-db_password = "YourSecurePassword123!"  # Min 8 characters - CHANGE THIS!
-db_username = "admin"
-db_name = "webapp_db"
-db_table_name = "users"
-
-# SSH Key (setup.sh updates this automatically)
-ssh_public_key = "ssh-rsa AAAA...your-actual-key..."
+# This file is auto-created by setup.sh and is in .gitignore
+ssh_public_key = "your-selected-key"
+db_password = "YourSecurePassword123!"  # Or your custom password
 ```
 
-**Why this matters:**
+**Why this is secure:**
 
-- ✅ `terraform.tfvars` is in `.gitignore` - won't be committed to git
-- ✅ Keeps passwords and keys out of version control
-- ✅ Your secrets stay on your machine only
-- ✅ Values here **override** defaults in `variables.tf`
+- ✅ `terraform.tfvars` is in `.gitignore` - never committed to git
+- ✅ Passwords and keys stay on your machine only
+- ✅ Values override defaults in `variables.tf`
+- ✅ No manual file editing required!
 
-**What to customize:**
+**Smart features:**
 
-- `db_password` - Use a strong password (minimum 8 characters)
-- `db_username`, `db_name`, `db_table_name` - Optional, defaults work fine
-- `ssh_public_key` - `setup.sh` handles this automatically
+- 📋 Re-running `setup.sh`? It shows your current config and asks if you want to keep it
+- 🔐 Current password displayed - change only if needed
+- 🔑 Auto-detects SSH keys from both config and `~/.ssh/`
 
-> 💡 **Tip:** The `setup.sh` script will update your SSH key automatically, so you only need to manually set the database password if you want something different than the default.
+> 💡 **Tip:** Just run `./scripts/setup.sh` and answer the prompts - it handles all security best practices automatically!
 
 ### Step 2: Deploy
 

@@ -128,5 +128,5 @@ variable "instance_type" {
 variable "ssh_public_key" {
   description = "SSH public key for EC2 instances"
   type        = string
-  default     = "" # SECURITY: setup.sh will update this, or override in terraform.tfvars
+  default     = "ssh-rsa AAAA...your-key..." # SECURITY: setup.sh will update this, or override in terraform.tfvars
 }
