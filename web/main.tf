@@ -36,7 +36,7 @@ resource "aws_launch_template" "web" {
   # Allow metadata service access
   metadata_options {
     http_endpoint               = "enabled"
-    http_tokens                 = "optional"  # Allow both IMDSv1 and IMDSv2
+    http_tokens                 = "optional" # Allow both IMDSv1 and IMDSv2
     http_put_response_hop_limit = 1
     instance_metadata_tags      = "enabled"
   }

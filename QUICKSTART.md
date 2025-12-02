@@ -1,56 +1,90 @@
 # Quick Start Guide
 
-## 3-Step Deployment
+**Complete deployment in 3 commands!**
 
-### Step 1: Setup
-
+## Step 1: Setup (First Time)
 ```bash
 ./scripts/setup.sh
 ```
 
-- Generates SSH key automatically
-- Updates configuration
-- Prompts for database password
+**Interactive prompts:**
+1. Found existing SSH keys? Select one or create new
+2. Want to change database password? (optional)
 
-### Step 2: Deploy
+**Duration:** 30 seconds
 
+---
+
+## Step 2: Deploy
 ```bash
 ./scripts/deploy.sh
 ```
 
-- Creates all AWS resources
-- Launches instances
-- Sets up database automatically
+**What happens automatically:**
+- ✅ Creates VPC with 6 subnets
+- ✅ Launches Application Load Balancer
+- ✅ Starts Auto Scaling Group (2 instances)
+- ✅ Creates RDS MySQL database
+- ✅ Sets up security groups
+- ✅ Creates database table
+- ✅ Instances become healthy
 
-### Step 3: Access
+**Duration:** ~10 minutes
 
+---
+
+## Step 3: Access
 ```bash
-./scripts/helper/info.sh
+./scripts/info.sh
 ```
 
-- Shows load balancer URL
-- Shows bastion IP for SSH access
+Copy the `load_balancer_url` and open in browser!
 
-## That's It! 🎉
+---
 
-Open the load balancer URL in your browser. Refresh multiple times to see load balancing in action (different instance IDs).
+## 🎉 You're Done!
 
-## Cleanup
+**Try these:**
+- Refresh page → see different Instance IDs (load balancing!)
+- Add data via form → saved to MySQL
+- Check AWS Console → see all resources
 
+## 🧹 Clean Up
 ```bash
 ./scripts/destroy.sh
 ```
 
-## What Gets Created
+Removes everything from AWS.
 
-- VPC with 6 subnets across 2 availability zones
-- Application Load Balancer
-- Auto Scaling Group (2-6 instances)
-- RDS MySQL database
-- NAT Gateways, Internet Gateway
-- Security groups with proper chaining
-- Bastion host for SSH access
+---
 
-## Need Help?
+## 📊 Architecture
 
-See `README.md` for detailed architecture and demo instructions.
+```
+Internet → Load Balancer → [Web Server 1, Web Server 2] → Database
+          ↑ Public      ↑ Private App Subnets    ↑ Private DB
+```
+
+- **2 Availability Zones** for high availability
+- **Auto Scaling:** 2-6 instances based on CPU
+- **Secure:** Private subnets, security group chaining
+- **Bastion host** for SSH access
+
+## 💡 Tips
+
+- First deployment takes ~10 minutes
+- Setup script auto-detects your SSH keys
+- Database table created automatically
+- All instances become healthy automatically
+- See README.md for testing procedures
+
+## ❓ Need Help?
+
+**Instances unhealthy?**
+→ Wait 2-3 minutes for initialization
+
+**Can't SSH?**
+→ Use bastion host from `info.sh` output
+
+**Want to redeploy?**
+→ Just run `deploy.sh` again!
