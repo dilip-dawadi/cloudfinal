@@ -1,6 +1,6 @@
 # AWS Multi-Tier Web Application
 
-Automated Terraform infrastructure for a highly available, auto-scaling web application on AWS. Perfect for learning cloud architecture!
+Automated Terraform infrastructure for a highly available, auto-scaling web application on AWS. Perfect for learning cloud architecture! Note: This project is for educational purposes and may incur AWS costs. Remember to use cloud9 or set up your AWS CLI with appropriate credentials.
 
 ## ⚡ 3 Steps to Deploy
 
