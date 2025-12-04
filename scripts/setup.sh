@@ -14,12 +14,23 @@ TFVARS_FILE="terraform.tfvars"
 CURRENT_SSH_KEY=""
 CURRENT_SSH_KEY_FULL=""
 
-if [ -f "$TFVARS_FILE" ] && grep -q "^ssh_public_key" "$TFVARS_FILE"; then
-    CURRENT_SSH_KEY_FULL=$(grep "^ssh_public_key" "$TFVARS_FILE" | sed 's/ssh_public_key = "\(.*\)"/\1/')
-    CURRENT_SSH_KEY=$(echo "$CURRENT_SSH_KEY_FULL" | cut -c 1-60)
-elif [ -f "variables.tf" ]; then
-    CURRENT_SSH_KEY_FULL=$(grep -A 1 'variable "ssh_public_key"' variables.tf | grep 'default' | sed 's/.*default.*=.*"\(.*\)".*/\1/')
-    CURRENT_SSH_KEY=$(echo "$CURRENT_SSH_KEY_FULL" | cut -c 1-60)
+# Check if terraform.tfvars exists and is not empty
+if [ -f "$TFVARS_FILE" ] && [ -s "$TFVARS_FILE" ]; then
+    # File exists and has content
+    if grep -q "^ssh_public_key" "$TFVARS_FILE" 2>/dev/null; then
+        CURRENT_SSH_KEY_FULL=$(grep "^ssh_public_key" "$TFVARS_FILE" | sed 's/ssh_public_key = "\(.*\)"/\1/')
+        if [ -n "$CURRENT_SSH_KEY_FULL" ]; then
+            CURRENT_SSH_KEY=$(echo "$CURRENT_SSH_KEY_FULL" | cut -c 1-60)
+        fi
+    fi
+fi
+
+# If not found in tfvars, check variables.tf
+if [ -z "$CURRENT_SSH_KEY_FULL" ] && [ -f "variables.tf" ]; then
+    CURRENT_SSH_KEY_FULL=$(grep -A 1 'variable "ssh_public_key"' variables.tf 2>/dev/null | grep 'default' | sed 's/.*default.*=.*"\(.*\)".*/\1/' || echo "")
+    if [ -n "$CURRENT_SSH_KEY_FULL" ]; then
+        CURRENT_SSH_KEY=$(echo "$CURRENT_SSH_KEY_FULL" | cut -c 1-60)
+    fi
 fi
 
 # If SSH key exists in config, ask if they want to use it
@@ -216,10 +227,17 @@ echo ""
 
 # Get current database password (check tfvars first, then variables.tf)
 CURRENT_DB_PASSWORD=""
-if [ -f "$TFVARS_FILE" ] && grep -q "^db_password" "$TFVARS_FILE"; then
-    CURRENT_DB_PASSWORD=$(grep "^db_password" "$TFVARS_FILE" | sed 's/.*"\(.*\)".*/\1/')
-elif [ -f "variables.tf" ]; then
-    CURRENT_DB_PASSWORD=$(grep -A 3 'variable "db_password"' variables.tf | grep 'default' | sed 's/.*"\(.*\)".*/\1/')
+# Get current database password (check tfvars first, then variables.tf)
+CURRENT_DB_PASSWORD=""
+if [ -f "$TFVARS_FILE" ] && [ -s "$TFVARS_FILE" ]; then
+    if grep -q "^db_password" "$TFVARS_FILE" 2>/dev/null; then
+        CURRENT_DB_PASSWORD=$(grep "^db_password" "$TFVARS_FILE" | sed 's/.*"\(.*\)".*/\1/' || echo "")
+    fi
+fi
+
+# If not found in tfvars, check variables.tf
+if [ -z "$CURRENT_DB_PASSWORD" ] && [ -f "variables.tf" ]; then
+    CURRENT_DB_PASSWORD=$(grep -A 3 'variable "db_password"' variables.tf 2>/dev/null | grep 'default' | sed 's/.*"\(.*\)".*/\1/' || echo "")
 fi
 
 # Default if nothing found
@@ -227,17 +245,21 @@ if [ -z "$CURRENT_DB_PASSWORD" ]; then
     CURRENT_DB_PASSWORD="YourSecurePassword123!"
 fi
 
-# Get current SSH key (check tfvars first, then variables.tf)
-CURRENT_SSH_KEY=""
-if [ -f "$TFVARS_FILE" ] && grep -q "^ssh_public_key" "$TFVARS_FILE"; then
-    CURRENT_SSH_KEY=$(grep "^ssh_public_key" "$TFVARS_FILE" | sed 's/.*"\(.*\)".*/\1/' | cut -c 1-50)
-elif [ -f "variables.tf" ]; then
-    CURRENT_SSH_KEY=$(grep -A 3 'variable "ssh_public_key"' variables.tf | grep 'default' | sed 's/.*"\(.*\)".*/\1/' | cut -c 1-50)
+# Get current SSH key for display (check tfvars first, then variables.tf)
+DISPLAY_SSH_KEY=""
+if [ -f "$TFVARS_FILE" ] && [ -s "$TFVARS_FILE" ]; then
+    if grep -q "^ssh_public_key" "$TFVARS_FILE" 2>/dev/null; then
+        DISPLAY_SSH_KEY=$(grep "^ssh_public_key" "$TFVARS_FILE" | sed 's/.*"\(.*\)".*/\1/' | cut -c 1-50 || echo "")
+    fi
+fi
+
+if [ -z "$DISPLAY_SSH_KEY" ] && [ -f "variables.tf" ]; then
+    DISPLAY_SSH_KEY=$(grep -A 3 'variable "ssh_public_key"' variables.tf 2>/dev/null | grep 'default' | sed 's/.*"\(.*\)".*/\1/' | cut -c 1-50 || echo "")
 fi
 
 # Show current configuration
-if [ -n "$CURRENT_SSH_KEY" ]; then
-    echo "ℹ️  Current SSH key in config: ${CURRENT_SSH_KEY}..."
+if [ -n "$DISPLAY_SSH_KEY" ]; then
+    echo "ℹ️  Current SSH key in config: ${DISPLAY_SSH_KEY}..."
 fi
 
 # Prompt for database password
