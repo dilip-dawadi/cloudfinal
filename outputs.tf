@@ -33,9 +33,9 @@ output "ssh_command_bastion" {
   value       = "ssh -i ~/.ssh/${var.ssh_key_name} ec2-user@${module.web.bastion_public_ip}"
 }
 
-output "ssh_key_path" {
-  description = "SSH key path"
-  value       = "~/.ssh/${var.ssh_key_name}"
+output "ssh_key_name" {
+  description = "SSH key name"
+  value       = var.ssh_key_name
 }
 
 output "db_name" {
