@@ -56,8 +56,7 @@ CREATE TABLE IF NOT EXISTS $DB_TABLE (
 );
 
 INSERT INTO $DB_TABLE (name, email) VALUES 
-    ('Test User', 'test@example.com'),
-    ('Demo User', 'demo@example.com')
+    ('user', 'user@example.com')
 ON DUPLICATE KEY UPDATE name=name;
 
 SELECT COUNT(*) as total_rows FROM $DB_TABLE;
