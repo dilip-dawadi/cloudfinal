@@ -23,7 +23,7 @@ variable "aws_region" {
 variable "project_name" {
   description = "Project name to be used for resource naming"
   type        = string
-  default     = "cloudfinal"
+  default     = "dilip"
 }
 
 variable "vpc_cidr" {
@@ -129,4 +129,32 @@ variable "ssh_public_key" {
   description = "SSH public key for EC2 instances"
   type        = string
   default     = "ssh-rsa AAAA...your-key..." # SECURITY: setup.sh will update this, or override in terraform.tfvars
+}
+
+variable "ssh_key_name" {
+  description = "Name of the SSH key file (without path, e.g., 'myproject-key')"
+  type        = string
+  default     = "aws-key"
+}
+
+# ============================================
+# AUTO SCALING CONFIGURATION
+# ============================================
+
+variable "asg_min_size" {
+  description = "Minimum number of instances in Auto Scaling Group"
+  type        = number
+  default     = 2
+}
+
+variable "asg_desired_capacity" {
+  description = "Desired number of instances in Auto Scaling Group"
+  type        = number
+  default     = 2
+}
+
+variable "asg_max_size" {
+  description = "Maximum number of instances in Auto Scaling Group"
+  type        = number
+  default     = 6
 }

@@ -31,16 +31,18 @@ BASTION_IP=$(terraform output -raw bastion_public_ip 2>/dev/null)
 RDS_ENDPOINT=$(terraform output -raw rds_endpoint 2>/dev/null | cut -d: -f1)
 LB_URL=$(terraform output -raw load_balancer_url 2>/dev/null)
 ASG_NAME=$(terraform output -raw autoscaling_group_name 2>/dev/null)
+SSH_KEY=$(terraform output -raw ssh_key_path 2>/dev/null)
+DB_USER=$(terraform output -raw db_username 2>/dev/null)
 
 if [ -n "$BASTION_IP" ]; then
     echo "🔐 SSH to Bastion:"
-    echo "   ssh -i ~/.ssh/cloudfinal-key ec2-user@${BASTION_IP}"
+    echo "   ssh -i ${SSH_KEY} ec2-user@${BASTION_IP}"
     echo ""
 fi
 
 if [ -n "$RDS_ENDPOINT" ]; then
     echo "💾 Connect to Database (from bastion):"
-    echo "   mysql -h ${RDS_ENDPOINT} -u admin -p"
+    echo "   mysql -h ${RDS_ENDPOINT} -u ${DB_USER} -p"
     echo ""
 fi
 

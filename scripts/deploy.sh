@@ -42,7 +42,9 @@ fi
 # Create plan
 echo ""
 echo "📋 Creating deployment plan..."
-PLAN_FILE="cloudfinal.plan"
+# Get project name from terraform for dynamic plan filename
+PROJECT_NAME=$(grep '^project_name' terraform.tfvars 2>/dev/null | cut -d'"' -f2 || echo "terraform")
+PLAN_FILE="${PROJECT_NAME}.plan"
 terraform plan -out="${PLAN_FILE}"
 
 # Ask for confirmation
