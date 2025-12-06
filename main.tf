@@ -68,6 +68,7 @@ module "web" {
   project_name      = var.project_name
   instance_type     = var.instance_type
   ssh_public_key    = var.ssh_public_key
+  ssh_key_name      = var.ssh_key_name
   web_sg_id         = module.security.web_sg_id
   bastion_sg_id     = module.security.bastion_sg_id
   bastion_subnet_id = module.network.public_subnet_1_id
@@ -86,7 +87,7 @@ module "asg" {
   launch_template_id = module.web.launch_template_id
   private_subnet_ids = [module.network.private_subnet_1_id, module.network.private_subnet_2_id]
   target_group_arn   = module.alb.target_group_arn
-  min_size           = 2
-  desired_capacity   = 2
-  max_size           = 6
+  min_size           = var.asg_min_size
+  desired_capacity   = var.asg_desired_capacity
+  max_size           = var.asg_max_size
 }

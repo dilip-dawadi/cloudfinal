@@ -13,6 +13,11 @@ variable "ssh_public_key" {
   type        = string
 }
 
+variable "ssh_key_name" {
+  description = "SSH key name for AWS key pair"
+  type        = string
+}
+
 variable "web_sg_id" {
   description = "Web security group ID"
   type        = string

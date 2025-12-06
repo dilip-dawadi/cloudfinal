@@ -21,17 +21,14 @@ variable "target_group_arn" {
 variable "min_size" {
   description = "Minimum size"
   type        = number
-  default     = 2
 }
 
 variable "desired_capacity" {
   description = "Desired capacity"
   type        = number
-  default     = 2
 }
 
 variable "max_size" {
   description = "Maximum size"
   type        = number
-  default     = 6
 }

@@ -30,5 +30,37 @@ output "autoscaling_group_name" {
 
 output "ssh_command_bastion" {
   description = "SSH command for bastion"
-  value       = "ssh -i ~/.ssh/cloudfinal-key ec2-user@${module.web.bastion_public_ip}"
+  value       = "ssh -i ~/.ssh/${var.ssh_key_name} ec2-user@${module.web.bastion_public_ip}"
+}
+
+output "ssh_key_path" {
+  description = "SSH key path"
+  value       = "~/.ssh/${var.ssh_key_name}"
+}
+
+output "db_name" {
+  description = "Database name"
+  value       = var.db_name
+}
+
+output "db_username" {
+  description = "Database username"
+  value       = var.db_username
+  sensitive   = true
+}
+
+output "db_password" {
+  description = "Database password"
+  value       = var.db_password
+  sensitive   = true
+}
+
+output "db_table_name" {
+  description = "Database table name"
+  value       = var.db_table_name
+}
+
+output "project_name" {
+  description = "Project name"
+  value       = var.project_name
 }

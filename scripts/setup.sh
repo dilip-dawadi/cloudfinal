@@ -42,6 +42,15 @@ if [ -n "$CURRENT_SSH_KEY_FULL" ]; then
     
     if [ "$KEEP_CURRENT" = "yes" ]; then
         SSH_PUBLIC_KEY="$CURRENT_SSH_KEY_FULL"
+        # Extract SSH key name from terraform.tfvars if it exists
+        if grep -q "^ssh_key_name" "$TFVARS_FILE" 2>/dev/null; then
+            SSH_KEY_FILENAME=$(grep "^ssh_key_name" "$TFVARS_FILE" | cut -d'"' -f2)
+            SSH_KEY_PATH="$HOME/.ssh/$SSH_KEY_FILENAME"
+        else
+            # Default if not found
+            DEFAULT_SSH_KEY=$(grep -A 3 'variable "ssh_key_name"' variables.tf 2>/dev/null | grep 'default' | cut -d'"' -f2 || echo "aws-key")
+            SSH_KEY_PATH="$HOME/.ssh/$DEFAULT_SSH_KEY"
+        fi
         echo "✅ Using existing SSH key from configuration"
         SKIP_SSH_SELECTION=true
     else
@@ -113,8 +122,10 @@ if [ "$SKIP_SSH_SELECTION" != "true" ]; then
             else
                 # Create new key
                 echo ""
-                read -p "Enter a name for your new SSH key [default: cloudfinal-key]: " KEY_NAME
-                KEY_NAME=${KEY_NAME:-cloudfinal-key}
+                # Get default from variables.tf
+                DEFAULT_KEY_NAME=$(grep -A 3 'variable "ssh_key_name"' variables.tf 2>/dev/null | grep 'default' | cut -d'"' -f2 || echo "aws-key")
+                read -p "Enter a name for your new SSH key [default: $DEFAULT_KEY_NAME]: " KEY_NAME
+                KEY_NAME=${KEY_NAME:-$DEFAULT_KEY_NAME}
                 
                 SSH_KEY_PATH="$HOME/.ssh/$KEY_NAME"
                 
@@ -154,8 +165,10 @@ if [ "$SKIP_SSH_SELECTION" != "true" ]; then
         else
             # Create new key
             echo ""
-            read -p "Enter a name for your new SSH key [default: cloudfinal-key]: " KEY_NAME
-            KEY_NAME=${KEY_NAME:-cloudfinal-key}
+            # Get default from variables.tf
+            DEFAULT_KEY_NAME=$(grep -A 3 'variable "ssh_key_name"' variables.tf 2>/dev/null | grep 'default' | cut -d'"' -f2 || echo "aws-key")
+            read -p "Enter a name for your new SSH key [default: $DEFAULT_KEY_NAME]: " KEY_NAME
+            KEY_NAME=${KEY_NAME:-$DEFAULT_KEY_NAME}
             
             SSH_KEY_PATH="$HOME/.ssh/$KEY_NAME"
             
@@ -192,19 +205,50 @@ TFVARS_FILE="terraform.tfvars"
 
 if [ ! -f "$TFVARS_FILE" ]; then
     echo "📝 Creating terraform.tfvars for secure configuration..."
+    # Extract default values from variables.tf (source of truth)
+    DEFAULT_PROJECT=$(grep -A 3 'variable "project_name"' variables.tf 2>/dev/null | grep 'default' | cut -d'"' -f2 || echo "cloudfinal")
+    DEFAULT_DB_NAME=$(grep -A 3 'variable "db_name"' variables.tf 2>/dev/null | grep 'default' | cut -d'"' -f2 || echo "webapp_db")
+    DEFAULT_DB_USER=$(grep -A 3 'variable "db_username"' variables.tf 2>/dev/null | grep 'default' | cut -d'"' -f2 || echo "admin")
+    DEFAULT_DB_TABLE=$(grep -A 3 'variable "db_table_name"' variables.tf 2>/dev/null | grep 'default' | cut -d'"' -f2 || echo "users")
+    # Extract SSH key name from the selected SSH key path
+    SSH_KEY_FILENAME=$(basename "$SSH_KEY_PATH")
+    
+    # Extract SSH key name from the selected SSH key path
+    SSH_KEY_FILENAME=$(basename "$SSH_KEY_PATH")
+    
     cat > "$TFVARS_FILE" << EOF
-# Terraform Variables - Secure Configuration
-# This file is in .gitignore and won't be committed
+# ============================================
+# PROJECT CONFIGURATION
+# ============================================
+project_name = "$DEFAULT_PROJECT"
 
-# SSH Configuration
+# ============================================
+# SSH CONFIGURATION
+# ============================================
+ssh_key_name   = "$SSH_KEY_FILENAME"
 ssh_public_key = "$SSH_PUBLIC_KEY"
 
-# Database Configuration (update if needed)
-db_password = "YourSecurePassword123!"
+# ============================================
+# DATABASE CONFIGURATION
+# ============================================
+db_name       = "$DEFAULT_DB_NAME"
+db_username   = "$DEFAULT_DB_USER"
+db_password   = "ChangeMe123!SecurePassword"
+db_table_name = "$DEFAULT_DB_TABLE"
+# ============================================
 EOF
     echo "✅ Created terraform.tfvars with your SSH key"
 else
     echo "📝 Updating terraform.tfvars with your SSH key..."
+    
+    # Extract SSH key name from the key path (if set)
+    if [ -n "$SSH_KEY_PATH" ]; then
+        SSH_KEY_FILENAME=$(basename "$SSH_KEY_PATH")
+    else
+        # If SSH_KEY_PATH not set (keeping existing), extract from terraform.tfvars
+        DEFAULT_KEY_NAME=$(grep -A 3 'variable "ssh_key_name"' variables.tf 2>/dev/null | grep 'default' | cut -d'"' -f2 || echo "aws-key")
+        SSH_KEY_FILENAME=$(grep "^ssh_key_name" "$TFVARS_FILE" 2>/dev/null | cut -d'"' -f2 || echo "$DEFAULT_KEY_NAME")
+    fi
     
     # Check if ssh_public_key already exists in the file
     if grep -q "^ssh_public_key" "$TFVARS_FILE"; then
@@ -221,13 +265,29 @@ else
         echo "ssh_public_key = \"$SSH_PUBLIC_KEY\"" >> "$TFVARS_FILE"
     fi
     
+    # Also update/add ssh_key_name
+    if grep -q "^ssh_key_name" "$TFVARS_FILE"; then
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' "s|^ssh_key_name.*|ssh_key_name = \"$SSH_KEY_FILENAME\"|" "$TFVARS_FILE"
+        else
+            sed -i "s|^ssh_key_name.*|ssh_key_name = \"$SSH_KEY_FILENAME\"|" "$TFVARS_FILE"
+        fi
+    else
+        # Add ssh_key_name before ssh_public_key if it doesn't exist
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' "/^ssh_public_key/i\\
+ssh_key_name   = \"$SSH_KEY_FILENAME\"
+" "$TFVARS_FILE"
+        else
+            sed -i "/^ssh_public_key/i ssh_key_name   = \"$SSH_KEY_FILENAME\"" "$TFVARS_FILE"
+        fi
+    fi
+    
     echo "✅ SSH key added to terraform.tfvars"
 fi
 echo ""
 
-# Get current database password (check tfvars first, then variables.tf)
-CURRENT_DB_PASSWORD=""
-# Get current database password (check tfvars first, then variables.tf)
+# Get current database password from terraform.tfvars (local config)
 CURRENT_DB_PASSWORD=""
 if [ -f "$TFVARS_FILE" ] && [ -s "$TFVARS_FILE" ]; then
     if grep -q "^db_password" "$TFVARS_FILE" 2>/dev/null; then
@@ -235,14 +295,9 @@ if [ -f "$TFVARS_FILE" ] && [ -s "$TFVARS_FILE" ]; then
     fi
 fi
 
-# If not found in tfvars, check variables.tf
-if [ -z "$CURRENT_DB_PASSWORD" ] && [ -f "variables.tf" ]; then
-    CURRENT_DB_PASSWORD=$(grep -A 3 'variable "db_password"' variables.tf 2>/dev/null | grep 'default' | sed 's/.*"\(.*\)".*/\1/' || echo "")
-fi
-
-# Default if nothing found
+# If not found, use a strong default (variables.tf has empty default for security)
 if [ -z "$CURRENT_DB_PASSWORD" ]; then
-    CURRENT_DB_PASSWORD="YourSecurePassword123!"
+    CURRENT_DB_PASSWORD="ChangeMe123!SecurePassword"
 fi
 
 # Get current SSH key for display (check tfvars first, then variables.tf)
@@ -317,12 +372,16 @@ echo "  ✅ Setup Complete!"
 echo "========================================="
 echo ""
 echo "📝 Configuration Summary:"
-echo "  - SSH Key: $SSH_KEY_PATH"
+if [ -n "$SSH_KEY_PATH" ]; then
+    echo "  - SSH Key: $SSH_KEY_PATH"
+else
+    echo "  - SSH Key: Existing key from configuration"
+fi
 echo "  - Configuration saved to: terraform.tfvars"
 if [ "$CHANGE_PASSWORD" = "yes" ]; then
     echo "  - Database password: Custom (updated)"
 else
-    echo "  - Database password: YourSecurePassword123! (default)"
+    echo "  - Database password: $CURRENT_DB_PASSWORD (default - CHANGE THIS!)"
 fi
 echo ""
 echo "🔒 Security Note:"
