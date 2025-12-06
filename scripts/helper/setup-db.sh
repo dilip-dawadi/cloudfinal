@@ -16,9 +16,9 @@ DB_NAME=$(terraform output -raw db_name 2>/dev/null)
 DB_USER=$(terraform output -raw db_username 2>/dev/null)
 DB_PASS=$(terraform output -raw db_password 2>/dev/null)
 DB_TABLE=$(terraform output -raw db_table_name 2>/dev/null)
-SSH_KEY=$(terraform output -raw ssh_key_path 2>/dev/null)
-
-if [ -z "$RDS_ENDPOINT" ] || [ -z "$BASTION_IP" ] || [ -z "$DB_NAME" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASS" ] || [ -z "$DB_TABLE" ]; then
+SSH_KEY_NAME=$(terraform output -raw ssh_key_name 2>/dev/null)
+SSH_KEY="${HOME}/.ssh/${SSH_KEY_NAME}"
+if [ -z "$RDS_ENDPOINT" ] || [ -z "$BASTION_IP" ] || [ -z "$DB_NAME" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASS" ] || [ -z "$DB_TABLE" ] || [ -z "$SSH_KEY_NAME" ]; then
     echo "❌ Could not get outputs. Make sure infrastructure is deployed."
     echo "   Run: terraform output"
     exit 1
@@ -29,11 +29,20 @@ echo "Bastion IP: $BASTION_IP"
 echo "Database: $DB_NAME"
 echo "Table: $DB_TABLE"
 echo ""
+echo "Setting up SSH key on bastion..."
+
+# Copy private key to bastion for accessing other instances
+scp -o StrictHostKeyChecking=no -i $SSH_KEY $SSH_KEY ec2-user@$BASTION_IP:/home/ec2-user/.ssh/$SSH_KEY_NAME
+ssh -o StrictHostKeyChecking=no -i $SSH_KEY ec2-user@$BASTION_IP "chmod 600 /home/ec2-user/.ssh/$SSH_KEY_NAME"
+
+echo "✅ SSH key configured on bastion"
+echo ""
 echo "Creating database table via bastion host..."
 echo ""
 
 # SSH to bastion and create table
 ssh -o StrictHostKeyChecking=no -i $SSH_KEY ec2-user@$BASTION_IP << ENDSSH
+
 # Install MySQL client if not present
 sudo yum install -y mariadb105 2>/dev/null || echo "MariaDB client already installed"
 

@@ -5,7 +5,7 @@ resource "aws_autoscaling_group" "main" {
   vpc_zone_identifier       = var.private_subnet_ids
   target_group_arns         = [var.target_group_arn]
   health_check_type         = "ELB"
-  health_check_grace_period = 300
+  health_check_grace_period = 600
 
   min_size         = var.min_size
   desired_capacity = var.desired_capacity
@@ -28,7 +28,7 @@ resource "aws_autoscaling_policy" "scale_up" {
   name                   = "${var.project_name}-scale-up"
   scaling_adjustment     = 2
   adjustment_type        = "ChangeInCapacity"
-  cooldown               = 300
+  cooldown               = 60
   autoscaling_group_name = aws_autoscaling_group.main.name
 }
 
@@ -36,13 +36,13 @@ resource "aws_autoscaling_policy" "scale_up" {
 resource "aws_cloudwatch_metric_alarm" "cpu_high" {
   alarm_name          = "${var.project_name}-cpu-high"
   comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = "2"
+  evaluation_periods  = "1"
   metric_name         = "CPUUtilization"
   namespace           = "AWS/EC2"
   period              = "60"
   statistic           = "Average"
-  threshold           = "70"
-  alarm_description   = "Triggers when CPU exceeds 70%"
+  threshold           = "40"
+  alarm_description   = "Triggers when CPU exceeds 40%"
   alarm_actions       = [aws_autoscaling_policy.scale_up.arn]
 
   dimensions = {
