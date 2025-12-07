@@ -31,7 +31,8 @@ BASTION_IP=$(terraform output -raw bastion_public_ip 2>/dev/null)
 RDS_ENDPOINT=$(terraform output -raw rds_endpoint 2>/dev/null | cut -d: -f1)
 LB_URL=$(terraform output -raw load_balancer_url 2>/dev/null)
 ASG_NAME=$(terraform output -raw autoscaling_group_name 2>/dev/null)
-SSH_KEY=$(terraform output -raw ssh_key_path 2>/dev/null)
+SSH_KEY_NAME=$(terraform output -raw ssh_key_name 2>/dev/null)
+SSH_KEY="${HOME}/.ssh/${SSH_KEY_NAME}"
 DB_USER=$(terraform output -raw db_username 2>/dev/null)
 
 if [ -n "$BASTION_IP" ]; then

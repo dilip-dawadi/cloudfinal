@@ -5,7 +5,8 @@ resource "aws_autoscaling_group" "main" {
   vpc_zone_identifier       = var.private_subnet_ids
   target_group_arns         = [var.target_group_arn]
   health_check_type         = "ELB"
-  health_check_grace_period = 600
+  health_check_grace_period = 120
+  default_cooldown          = 60
 
   min_size         = var.min_size
   desired_capacity = var.desired_capacity
@@ -41,9 +42,10 @@ resource "aws_cloudwatch_metric_alarm" "cpu_high" {
   namespace           = "AWS/EC2"
   period              = "60"
   statistic           = "Average"
-  threshold           = "40"
-  alarm_description   = "Triggers when CPU exceeds 40%"
+  threshold           = "70"
+  alarm_description   = "Triggers when CPU exceeds 70%"
   alarm_actions       = [aws_autoscaling_policy.scale_up.arn]
+  treat_missing_data  = "notBreaching"
 
   dimensions = {
     AutoScalingGroupName = aws_autoscaling_group.main.name
@@ -53,7 +55,7 @@ resource "aws_cloudwatch_metric_alarm" "cpu_high" {
 # Auto Scaling Policy - Scale Down
 resource "aws_autoscaling_policy" "scale_down" {
   name                   = "${var.project_name}-scale-down"
-  scaling_adjustment     = -1
+  scaling_adjustment     = -2
   adjustment_type        = "ChangeInCapacity"
   cooldown               = 60
   autoscaling_group_name = aws_autoscaling_group.main.name
@@ -63,7 +65,7 @@ resource "aws_autoscaling_policy" "scale_down" {
 resource "aws_cloudwatch_metric_alarm" "cpu_low" {
   alarm_name          = "${var.project_name}-cpu-low"
   comparison_operator = "LessThanThreshold"
-  evaluation_periods  = "1"
+  evaluation_periods  = "2"
   metric_name         = "CPUUtilization"
   namespace           = "AWS/EC2"
   period              = "60"
@@ -71,6 +73,7 @@ resource "aws_cloudwatch_metric_alarm" "cpu_low" {
   threshold           = "20"
   alarm_description   = "Triggers when CPU below 20%"
   alarm_actions       = [aws_autoscaling_policy.scale_down.arn]
+  treat_missing_data  = "notBreaching"
 
   dimensions = {
     AutoScalingGroupName = aws_autoscaling_group.main.name
